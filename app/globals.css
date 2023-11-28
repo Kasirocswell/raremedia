@@ -25,3 +25,10 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+.navbar-profile-pic {
+  width: 40px; /* 10rem */
+  height: 40px; /* 10rem */
+  border-radius: 50%;
+  object-fit: cover;
+}

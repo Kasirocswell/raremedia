@@ -4,8 +4,8 @@ import React, { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Marketing from './components/Marketing';
 import Categories from './components/Categories';
-import { getUser } from '../store/userData'; // Adjust the path to your userData file
-import { supabase } from '../supabase/client'; // Adjust the path as per your setup
+import { getUser } from '../store/userData'; 
+import { supabase } from '../supabase/client'; 
 
 const HomePage: React.FC = () => {
   const { user, setUser } = getUser(); // Use the getUser hook to access user and setUser
@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
       console.log("Unsubscribing auth listener");
       authListener.subscription.unsubscribe();
     };
-  }, [setUser]); // Add setUser to the dependency array
+  }, [user?.id]); // Add setUser to the dependency array
 
   console.log("User state in HomePage:", user);
   const isSignedIn = user !== null;

@@ -3,37 +3,90 @@ import Link from 'next/link';
 import { IconArrowNarrowLeft, IconArrowNarrowRight, IconHome, IconUser, IconSettings, IconLogout } from '@tabler/icons-react';
 import { getUser } from '../../store/userData'; 
 import { supabase } from '../../supabase/client'; 
+import { useRouter } from 'next/navigation';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const { user, setUser } = getUser(); // Accessing user and setUser from your custom hook or context
+  const { user, setUser } = getUser();
+  const [isArtist, setIsArtist] = useState(false);
   const defaultProfilePic = 'download.png'; 
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (user && user.id) {
-        const { data, error } = await supabase
+      if (!user || !user.id) return;
+  
+      const { data: artistData, error: artistError } = await supabase
+        .from('artists')
+        .select('*')
+        .eq('artist_id', user.id)
+        .single();
+  
+      if (artistError) {
+        console.error('Error checking artist status:', artistError);
+        return;
+      }
+  
+      setIsArtist(!!artistData);
+  
+      let profileData, error;
+  
+      if (artistData) {
+        ({ data: profileData, error } = await supabase
+          .from('artists')
+          .select('artist_name, profile_picture')
+          .eq('artist_id', user.id)
+          .single());
+      } else {
+        ({ data: profileData, error } = await supabase
           .from('users')
           .select('username, profile_picture')
           .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user profile:', error);
-        } else if (data) {
-          setUser({ ...user, username: data.username, profilePicture: data.profile_picture });
+          .single());
+      }
+  
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+  
+      if (profileData) {
+        if ('artist_name' in profileData) {
+          setUser({ 
+            ...user, 
+            username: profileData.artist_name, 
+            profilePicture: profileData.profile_picture 
+          });
+        } else if ('username' in profileData) {
+          setUser({ 
+            ...user, 
+            username: profileData.username, 
+            profilePicture: profileData.profile_picture 
+          });
         }
       }
     };
-
+  
     fetchUserProfile();
-  }, [user, setUser]);
+  }, [user?.id, setUser]);
 
   const toggleNavbar = () => setIsOpen(!isOpen);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null); // Resetting user state to null after logout
+    try {
+      const { error } = await supabase.auth.signOut();
+  
+      if (error) {
+        throw error;
+      }
+  
+      localStorage.clear();
+      sessionStorage.clear();
+      setUser(null);
+      router.push('/auth');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const isSignedIn = user !== null;
@@ -44,10 +97,10 @@ const Navbar: React.FC = () => {
         {isOpen && (
           <div>
             <div className="flex flex-col items-center p-4 w-[100px] h-[100px]">
-              <Link href={`/user/${user?.username}`}>
+              <Link href={isSignedIn ? (isArtist ? `/artist/${user?.id}` : `/user/${user?.username}`) : '/auth'}>
                 <img src={user?.profilePicture || defaultProfilePic} alt="Profile" className="rounded-full w-10 h-10 mb-2 cursor-pointer" />
               </Link>
-              <p className="text-center">{user?.username || 'Username'}</p>
+              {isSignedIn && <p className="text-center">{user?.username || 'Username'}</p>}
             </div>
             <nav>
               <ul>
@@ -56,22 +109,24 @@ const Navbar: React.FC = () => {
                     <IconHome size={20} className="cursor-pointer" />
                   </Link>
                 </li>
-                <li className="p-4 hover:bg-gray-700 flex items-center">
-                  <Link href="/profile">
-                    <IconUser size={20} className="cursor-pointer" />
-                  </Link>
-                </li>
-                <li className="p-4 hover:bg-gray-700 flex items-center">
-                  <Link href="/settings">
-                    <IconSettings size={20} className="cursor-pointer" />
-                  </Link>
-                </li>
                 {isSignedIn && (
-                  <li className="p-4 hover:bg-gray-700 flex items-center">
-                    <button onClick={handleLogout} className="focus:outline-none">
-                      <IconLogout size={20} className="cursor-pointer" />
-                    </button>
-                  </li>
+                  <>
+                    <li className="p-4 hover:bg-gray-700 flex items-center">
+                      <Link href={isArtist ? "/artist-profile" : "/profile"}>
+                        <IconUser size={20} className="cursor-pointer" />
+                      </Link>
+                    </li>
+                    <li className="p-4 hover:bg-gray-700 flex items-center">
+                      <Link href="/settings">
+                        <IconSettings size={20} className="cursor-pointer" />
+                      </Link>
+                    </li>
+                    <li className="p-4 hover:bg-gray-700 flex items-center">
+                      <button onClick={handleLogout} className="focus:outline-none">
+                        <IconLogout size={20} className="cursor-pointer" />
+                      </button>
+                    </li>
+                  </>
                 )}
               </ul>
             </nav>

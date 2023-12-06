@@ -2,50 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import TierModal from '../components/TierModal'; // Ensure this path is correct
 import { supabase } from '../../supabase/client'; // Adjust the path as per your setup
 
 const ArtistProfilePage: React.FC = () => {
   const [profile, setProfile] = useState({
+    artist_id: '', 
     artist_name: '',
     bio: '',
     profile_picture: '',
     banner: '',
+    tiktok: '',
+    instagram: '',
+    twitter: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showTierModal, setShowTierModal] = useState(false);
 
-  // Fetch artist profile data from Supabase
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-
-        if (userError) throw userError;
-
-        const user = userData?.user;
-        if (user) {
-          let { data, error } = await supabase
-            .from('artists')
-            .select('*')
-            .eq('artist_id', user.id)
-            .single();
-
-          if (error) throw error;
-          if (data) setProfile(data);
-        }
-      } catch (error) {
-        console.error('Error fetching artist profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
       setLoading(true);
       const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -53,60 +28,84 @@ const ArtistProfilePage: React.FC = () => {
 
       const user = userData?.user;
       if (user) {
-        const updates = {
-          artist_id: user.id,
-          artist_name: profile.artist_name,
-          bio: profile.bio,
-          profile_picture: profile.profile_picture,
-          banner: profile.banner,
-          updated_at: new Date(),
-        };
-
-        let { error } = await supabase.from('artists').upsert(updates);
+        let { data, error } = await supabase
+          .from('artists')
+          .select('*')
+          .eq('artist_id', user.id)
+          .single();
 
         if (error) throw error;
-        alert('Artist profile updated successfully!');
+        if (data) setProfile({ ...data, artist_id: user.id });
       }
-    } catch (error) {
-      console.error('Error updating artist profile:', error);
-    } finally {
       setLoading(false);
-    }
+    };
+
+    fetchProfile();
+  }, []);
+
+
+   const toggleTierModal = () => {
+    setShowTierModal(!showTierModal);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'profile_picture' | 'banner', bucket: string) => {
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user || !e.target.files || e.target.files.length === 0) return;
-  
+
       const user = userData.user;
       const file = e.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
-  
+
       let { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
-  
+
       if (uploadError) throw uploadError;
-  
-      // Fetch the public URL of the uploaded file
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+
+      const { data: urlData } = await supabase.storage.from(bucket).getPublicUrl(filePath);
       const publicUrl = urlData.publicUrl;
-  
-      // Update the artist's profile in the Supabase artists table
-      const columnToUpdate = type === 'profile_picture' ? 'profile_picture' : 'banner';
+
+      setProfile({ ...profile, [type]: publicUrl });
+
       let { error: updateError } = await supabase
         .from('artists')
-        .update({ [columnToUpdate]: publicUrl })
+        .update({ [type]: publicUrl })
         .eq('artist_id', user.id);
-  
+
       if (updateError) throw updateError;
-  
-      // Update local state
-      setProfile({ ...profile, [type]: publicUrl });
     } catch (error) {
       console.error('Error:', error);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError) throw userError;
+
+    const user = userData?.user;
+    if (user) {
+      const updates = {
+        artist_id: user.id,
+        artist_name: profile.artist_name,
+        bio: profile.bio,
+        profile_picture: profile.profile_picture,
+        banner: profile.banner,
+        tiktok: profile.tiktok,
+        instagram: profile.instagram,
+        twitter: profile.twitter,
+        updated_at: new Date(),
+      };
+
+      let { error } = await supabase.from('artists').upsert(updates);
+
+      if (error) throw error;
+      alert('Artist profile updated successfully!');
+    }
+    setLoading(false);
   };
 
   return (
@@ -119,10 +118,18 @@ const ArtistProfilePage: React.FC = () => {
         <img 
           src={profile.banner} 
           alt="Banner" 
-          className="w-full h-48 object-cover mb-4" // Adjust the size as needed
+          className="w-full h-48 object-cover mb-4"
         />
       )}
   
+      {/* Subscription Tiers Title */}
+      <h2 
+        className="text-2xl font-bold cursor-pointer mb-4"
+        onClick={toggleTierModal}
+      >
+        Subscription Tiers
+      </h2>
+
       {/* Display the profile picture */}
       <img 
         src={profile.profile_picture ? profile.profile_picture : 'download.png'} 
@@ -148,8 +155,27 @@ const ArtistProfilePage: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700">Banner:</label>
           <input type="file" onChange={(e) => handleFileUpload(e, 'banner', 'banner')} disabled={loading} className="text-black mt-1 block w-full" />
         </div>
+        {/* New fields for social media links */}
+        <div className="mb-4">
+          <label htmlFor="tiktok" className="block text-sm font-medium text-gray-700">TikTok:</label>
+          <input type="text" id="tiktok" value={profile.tiktok || ""} onChange={(e) => setProfile({ ...profile, tiktok: e.target.value })} disabled={loading} className="text-black mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="instagram" className="block text-sm font-medium text-gray-700">Instagram:</label>
+          <input type="text" id="instagram" value={profile.instagram || ""} onChange={(e) => setProfile({ ...profile, instagram: e.target.value })} disabled={loading} className="text-black mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="twitter" className="block text-sm font-medium text-gray-700">Twitter:</label>
+          <input type="text" id="twitter" value={profile.twitter || ""} onChange={(e) => setProfile({ ...profile, twitter: e.target.value })} disabled={loading} className="text-black mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+        </div>
         <button type="submit" disabled={loading} className="w-full bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded">{loading ? 'Saving...' : 'Save Profile'}</button>
       </form>
+
+      {/* TierModal */}
+      <TierModal 
+        isOpen={showTierModal} 
+        onClose={toggleTierModal}       
+        />
     </div>
   );
 }

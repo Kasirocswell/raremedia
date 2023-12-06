@@ -9,7 +9,7 @@ const Marketing: React.FC = () => {
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl md:text-6xl font-bold text-white">Own Your Art</h1>
           <p className="text-lg md:text-xl text-white mt-4">Interact directly with your supporters</p>
-          <Link href="/signup">
+          <Link href="/auth">
             <button className="mt-6 bg-red-800 text-white py-3 px-6 rounded-lg">Get Started</button>
           </Link>
         </div>
@@ -31,7 +31,7 @@ const Marketing: React.FC = () => {
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl md:text-6xl font-bold text-white">Create and Share</h1>
           <p className="text-lg md:text-xl text-white mt-4">Showcase your work to the world</p>
-          <Link href="/signup">
+          <Link href="/auth">
             <button className="mt-6 bg-red-800 text-white py-3 px-6 rounded-lg">Join Now</button>
           </Link>
         </div>

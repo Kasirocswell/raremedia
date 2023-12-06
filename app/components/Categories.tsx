@@ -1,53 +1,75 @@
-import React from 'react';
-import ArtistCard from './ArtistCard'; // Adjust the import path as needed
-import GenreCard from './GenreCard'; // Adjust the import path as needed
+'use client'
+
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import ArtistCard from './ArtistCard';
+import { supabase } from '../../supabase/client'; 
+
+interface Content {
+  content_id: string; // Adjusted to match your fetched data structure
+  title: string;
+  description: string;
+  url: string;
+  type: string;
+}
 
 const Categories: React.FC = () => {
-  // Sample data for genres and artists
-  const genres = [
-    { id: 1, title: "Pop", description: "Popular music", imageUrl: "bg1.png" },
-    { id: 2, title: "Rock", description: "Rock music", imageUrl: "bg2.png" },
-    { id: 3, title: "Jazz", description: "Jazz music", imageUrl: "bg3.png" },
-    // Add more genres as needed
-  ];
+  const [freeContent, setFreeContent] = useState<Content[]>([]);
+  const router = useRouter();
 
-  const artists = [
-    { id: 1, name: "Artist One", description: "Description of Artist One", imageUrl: "bg1.png" },
-    { id: 2, name: "Artist Two", description: "Description of Artist Two", imageUrl: "bg2.png" },
-    { id: 3, name: "Artist Three", description: "Description of Artist Three", imageUrl: "bg3.png" },
-    // Add more artists as needed
-  ];
+  useEffect(() => {
+    const fetchFreeContent = async () => {
+      const { data, error } = await supabase
+        .from('content')
+        .select('*')
+        .eq('is_free', true);
+
+      if (error) {
+        console.error('Error fetching free content:', error);
+        return;
+      }
+
+      setFreeContent(data || []);
+    };
+
+    fetchFreeContent();
+  }, []);
+
+  const handleCardClick = (contentId: string) => {
+    console.log('Clicked content ID:', contentId); // Debugging log
+    if (contentId) {
+      router.push(`content/${contentId}`);
+    } else {
+      console.error('Content ID is undefined');
+    }
+  };
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Artist Categories</h1>
-      
+
+      {/* Free Content Section */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Genres</h2>
+        <h2 className="text-lg font-semibold mb-2">Free Content</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {genres.map((genre) => (
-            <GenreCard key={genre.id} title={genre.title} description={genre.description} image={'bg3.png'} />
+          {freeContent.map((content) => (
+            <div key={content.content_id} onClick={() => handleCardClick(content.content_id)}>
+              <ArtistCard
+                name={content.title}
+                description={content.description}
+                imageUrl={content.url || 'default-image.png'}
+              />
+            </div>
           ))}
         </div>
         <div className="text-right mt-2">
-          <a href="#" className="text-blue-500 hover:text-blue-700">Show More</a>
+          <a href="#" className="text-blue-500 hover:text-blue-700">See More</a>
         </div>
       </div>
 
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Artists</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {artists.map((artist) => (
-            <ArtistCard key={artist.id} name={artist.name} description={artist.description} imageUrl={artist.imageUrl} />
-          ))}
-        </div>
-        <div className="text-right mt-2">
-          <a href="#" className="text-blue-500 hover:text-blue-700">Show More</a>
-        </div>
-      </div>
+      {/* ... other sections ... */}
     </div>
   );
 };
 
 export default Categories;
-

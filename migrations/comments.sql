@@ -1,0 +1,9 @@
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    content_id INTEGER NOT NULL REFERENCES content(content_id),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+

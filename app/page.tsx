@@ -1,32 +1,52 @@
 'use client'
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import Marketing from './components/Marketing';
 import Categories from './components/Categories';
+import ArtistStats from './components/ArtistStats';
 import { getUser } from '../store/userData'; 
 import { supabase } from '../supabase/client'; 
 
 const HomePage: React.FC = () => {
-  const { user, setUser } = getUser(); // Use the getUser hook to access user and setUser
+  const { user, setUser } = getUser();
+  const [isArtist, setIsArtist] = useState(false);
+
+  // useEffect(() => {
+  //   // Set up the auth listener only once when the component mounts
+  //   const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+  //     setUser(session?.user || null);
+  //   });
+
+  //   return () => {
+  //     // Clean up the listener when the component unmounts
+  //     authListener.subscription.unsubscribe();
+  //   };
+  // }, [setUser]);
 
   useEffect(() => {
-    console.log("Setting up auth listener");
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", session);
-      setUser(session?.user || null); // Update the user state using setUser
-    });
+    const fetchUserProfile = async () => {
+      if (!user || !user.id) return;
 
-    // Cleanup the listener when the component unmounts
-    return () => {
-      console.log("Unsubscribing auth listener");
-      authListener.subscription.unsubscribe();
+      // Check if the user is an artist
+      const { data: artistData, error: artistError } = await supabase
+        .from('artists')
+        .select('*')
+        .eq('artist_id', user.id)
+        .single();
+
+      if (artistError) {
+        console.error('Error checking artist status:', artistError);
+        return;
+      }
+
+      setIsArtist(!!artistData);
     };
-  }, [user?.id]); // Add setUser to the dependency array
 
-  console.log("User state in HomePage:", user);
+    fetchUserProfile();
+  }, [user?.id]);
+
   const isSignedIn = user !== null;
-  console.log("Is signed in on HomePage:", isSignedIn);
 
   return (
     <div>
@@ -34,7 +54,12 @@ const HomePage: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="text-center">
           {isSignedIn ? (
-            <Categories />
+            isArtist ? (
+              // <ArtistStats />
+              <div>Artist Stats Here</div>
+            ) : (
+              <Categories />
+            )
           ) : (
             <Marketing />
           )}

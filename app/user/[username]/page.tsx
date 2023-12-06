@@ -9,10 +9,9 @@ interface UserProfileData {
     id: string;
     username: string;
     email: string;
-    profilePictureUrl: string; // URL for the profile picture
-    bannerUrl: string;        // URL for the banner
+    profilePictureUrl: string; 
+    bannerUrl: string;        
     bio: string;
-    // Add other user fields as needed
 }
 
 const UserProfile = () => {
@@ -21,7 +20,7 @@ const UserProfile = () => {
 
   const fetchImageUrls = async (path: string) => {
     const { data } = supabase.storage.from('pfp').getPublicUrl(path);
-    return data?.publicUrl || ''; // Correctly accessing the publicUrl
+    return data?.publicUrl || ''; 
   };
   
 

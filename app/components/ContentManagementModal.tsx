@@ -3,14 +3,15 @@ import Modal from 'react-modal';
 import { supabase } from '../../supabase/client';
 
 type Content = {
-  id: string;
+  content_id: string;
   title: string;
   type: 'picture' | 'song' | 'video';
-  tier: string | null;
+  tier: string[]; // Tier IDs stored as strings
+  is_free: boolean;
 };
 
 type Tier = {
-  id: string;
+  id: number; // Tier ID as an integer
   name: string;
 };
 
@@ -72,28 +73,61 @@ const ContentManagementModal: React.FC<ContentManagementModalProps> = ({ isOpen,
     const { error } = await supabase
       .from('content')
       .delete()
-      .match({ id: contentId });
+      .match({ content_id: contentId });
 
     if (error) {
       console.error('Error deleting content:', error);
     } else {
-      setContentList(contentList.filter(content => content.id !== contentId));
+      setContentList(contentList.filter(content => content.content_id !== contentId));
     }
   };
 
-  const handleEditContentTier = async (contentId: string, newTierId: string) => {
+  const handleAddContentTier = async (contentId: string, newTierId: number) => {
+    const content = contentList.find(c => c.content_id === contentId);
+    if (!content || content.tier.includes(newTierId.toString())) return;
+
+    const updatedTiers = [...content.tier, newTierId.toString()];
+    const isFree = updatedTiers.length === 0;
+
     const { error } = await supabase
       .from('content')
-      .update({ tier: newTierId })
-      .match({ id: contentId });
+      .update({ tier: updatedTiers, is_free: !isFree })
+      .match({ content_id: contentId });
 
     if (error) {
       console.error('Error updating content tier:', error);
     } else {
-      setContentList(contentList.map(content => 
-        content.id === contentId ? { ...content, tier: newTierId } : content
+      setContentList(contentList.map(c => 
+        c.content_id === contentId ? { ...c, tier: updatedTiers, is_free: !isFree } : c
       ));
     }
+  };
+
+  const handleRemoveContentTier = async (contentId: string, tierId: number) => {
+    const content = contentList.find(c => c.content_id === contentId);
+    if (!content) return;
+
+    const updatedTiers = content.tier.filter(t => t !== tierId.toString());
+    const isFree = updatedTiers.length === 0;
+
+    const { error } = await supabase
+      .from('content')
+      .update({ tier: updatedTiers, is_free: isFree })
+      .match({ content_id: contentId });
+
+    if (error) {
+      console.error('Error removing content tier:', error);
+    } else {
+      setContentList(contentList.map(c => 
+        c.content_id === contentId ? { ...c, tier: updatedTiers, is_free: isFree } : c
+      ));
+    }
+  };
+
+  // Function to find tier name by ID
+  const getTierNameById = (tierId: string) => {
+    const tier = tiers.find(t => t.id.toString() === tierId);
+    return tier ? tier.name : 'Unknown Tier';
   };
 
   return (
@@ -101,24 +135,37 @@ const ContentManagementModal: React.FC<ContentManagementModalProps> = ({ isOpen,
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Manage Content</h2>
       <div>
         {contentList.map(content => (
-          <div key={content.id} className="mb-4 p-2 border-b">
+          <div key={content.content_id} className="mb-4 p-2 border-b">
             <h3 className="text-lg font-semibold text-gray-800">{content.title} ({content.type})</h3>
             <div className="my-2">
+              <div className="flex flex-wrap mb-2">
+                {content.tier.map(tierId => (
+                  <div key={tierId} className="mr-2 mb-2 bg-blue-200 rounded-full px-3 py-1 text-black">
+                    {getTierNameById(tierId)}
+                    <button onClick={() => handleRemoveContentTier(content.content_id, parseInt(tierId))} className="ml-2 text-red-500">
+                        &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
               <select
-                value={content.tier || ''}
-                onChange={(e) => handleEditContentTier(content.id, e.target.value)}
                 className="border text-black border-gray-300 rounded p-2 mr-2"
+                defaultValue=""
+                onChange={(e) => {
+                  const selectedTierId = parseInt(e.target.value);
+                  if (selectedTierId) {
+                    handleAddContentTier(content.content_id, selectedTierId);
+                    e.target.value = ""; // Reset the dropdown after selection
+                  }
+                }}
               >
-                <option value="">No Tier</option>
+                <option value="" disabled>Add Tier</option>
                 {tiers.map(tier => (
                   <option key={tier.id} value={tier.id}>{tier.name}</option>
                 ))}
               </select>
-              <button onClick={() => handleEditContentTier(content.id, content.tier || '')} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded">
-                Save Tier
-              </button>
             </div>
-            <button onClick={() => handleDeleteContent(content.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">
+            <button onClick={() => handleDeleteContent(content.content_id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">
               Delete
             </button>
           </div>

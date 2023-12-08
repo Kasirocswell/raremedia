@@ -15,6 +15,7 @@ interface ContentUploadModalProps {
 
 const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [isFree, setIsFree] = useState<boolean>(true);
@@ -74,27 +75,40 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
       return;
     }
 
-    const { data: urlData} = await supabase.storage.from('content').getPublicUrl(filePath);
-    
+    const { data: urlData } = await supabase.storage.from('content').getPublicUrl(filePath);
     const publicUrl = urlData?.publicUrl;
-    
+
     if (!publicUrl) {
       console.error('Public URL is null');
       return;
     }
-    
+
+    let thumbnailUrl = '';
+    if (thumbnail) {
+      const thumbnailPath = `content/${artistId}/thumbnails/${Date.now()}-${thumbnail.name}`;
+      const { error: thumbnailUploadError } = await supabase.storage.from('content').upload(thumbnailPath, thumbnail);
+
+      if (thumbnailUploadError) {
+        console.error('Error uploading thumbnail:', thumbnailUploadError);
+        return;
+      }
+
+      const { data: thumbnailUrlData } = await supabase.storage.from('content').getPublicUrl(thumbnailPath);
+      thumbnailUrl = thumbnailUrlData?.publicUrl || '';
+    }
+
     const { error } = await supabase.from('content').insert([{
       artist_id: artistId,
       title,
       description,
       type: contentType,
-      url: publicUrl, // Store only the URL string
+      url: publicUrl,
+      thumbnail: thumbnailUrl,
       is_free: isFree && !selectedTier,
       tier: selectedTier || null,
       created_at: new Date(),
       updated_at: new Date()
     }]);
-    
 
     if (error) {
       console.error('Error inserting content data:', error);
@@ -119,6 +133,15 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
         type="file"
         onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
         className="border text-black border-gray-300 rounded p-2 mb-4"
+      />
+      <p className='text-black'>
+        Thumbnail
+      </p>
+      <input
+        type="file"
+        onChange={(e) => setThumbnail(e.target.files ? e.target.files[0] : null)}
+        className="border text-black border-gray-300 rounded p-2 mb-4"
+        accept="image/*"
       />
       <input
         type="text"

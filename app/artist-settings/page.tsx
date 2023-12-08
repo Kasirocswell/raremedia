@@ -4,15 +4,18 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import TierModal from '../components/TierModal'; // Adjust the import path as needed
 import ContentUploadModal from '../components/ContentUploadModal'; // Adjust the import path as needed
+import ContentManagementModal from '../components/ContentManagementModal'; // Adjust the import path as needed
 import { getUser } from '../../store/userData'; // Adjust the import path as needed
 
 const ArtistSettings: React.FC = () => {
   const [showTierModal, setShowTierModal] = useState(false);
   const [showContentUploadModal, setShowContentUploadModal] = useState(false);
+  const [showContentManagementModal, setShowContentManagementModal] = useState(false);
   const { user } = getUser();
 
   const toggleTierModal = () => setShowTierModal(!showTierModal);
   const toggleContentUploadModal = () => setShowContentUploadModal(!showContentUploadModal);
+  const toggleContentManagementModal = () => setShowContentManagementModal(!showContentManagementModal);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -35,6 +38,12 @@ const ArtistSettings: React.FC = () => {
         </button>
       </div>
 
+      <div className="mb-4">
+        <button onClick={toggleContentManagementModal} className="text-blue-500 hover:text-blue-700">
+          Manage Content
+        </button>
+      </div>
+
       <TierModal 
         isOpen={showTierModal} 
         onClose={toggleTierModal} 
@@ -43,6 +52,11 @@ const ArtistSettings: React.FC = () => {
       <ContentUploadModal 
         isOpen={showContentUploadModal} 
         onClose={toggleContentUploadModal}
+      />
+
+      <ContentManagementModal 
+        isOpen={showContentManagementModal} 
+        onClose={toggleContentManagementModal}
       />
     </div>
   );

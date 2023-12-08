@@ -5,6 +5,7 @@ interface VideoPlayerProps {
   url: string;
   title: string;
   artist: string;
+  thumbnail: string;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, artist }) => {

@@ -12,12 +12,15 @@ interface SongPlayerProps {
 const SongPlayer: React.FC<SongPlayerProps> = ({ url, title, artist, artwork }) => {
   return (
     <div className="song-player">
+      {/* Artwork */}
+      <div className="artwork-container">
+        <img src={artwork} alt={title} className="song-artwork" />
+      </div>
+
+      {/* Song Info and Player */}
       <div className="song-info">
-        <img src={artwork} alt="Song Artwork" className="song-artwork" />
-        <div className="song-details">
-          <h3 className="song-title">{title}</h3>
-          <p className="artist-name">{artist}</p>
-        </div>
+        <h3 className="song-title">{title}</h3>
+        <p className="artist-name">{artist}</p>
       </div>
       <AudioPlayer
         src={url}

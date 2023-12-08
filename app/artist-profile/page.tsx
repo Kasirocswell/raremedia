@@ -121,14 +121,6 @@ const ArtistProfilePage: React.FC = () => {
           className="w-full h-48 object-cover mb-4"
         />
       )}
-  
-      {/* Subscription Tiers Title */}
-      <h2 
-        className="text-2xl font-bold cursor-pointer mb-4"
-        onClick={toggleTierModal}
-      >
-        Subscription Tiers
-      </h2>
 
       {/* Display the profile picture */}
       <img 

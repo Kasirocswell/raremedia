@@ -6,10 +6,11 @@ import ArtistCard from './ArtistCard';
 import { supabase } from '../../supabase/client'; 
 
 interface Content {
-  content_id: string; // Adjusted to match your fetched data structure
+  content_id: string;
   title: string;
   description: string;
   url: string;
+  thumbnail?: string; // Optional thumbnail field
   type: string;
 }
 
@@ -36,7 +37,7 @@ const Categories: React.FC = () => {
   }, []);
 
   const handleCardClick = (contentId: string) => {
-    console.log('Clicked content ID:', contentId); // Debugging log
+    console.log('Clicked content ID:', contentId);
     if (contentId) {
       router.push(`content/${contentId}`);
     } else {
@@ -57,7 +58,7 @@ const Categories: React.FC = () => {
               <ArtistCard
                 name={content.title}
                 description={content.description}
-                imageUrl={content.url || 'default-image.png'}
+                imageUrl={content.thumbnail || content.url || 'default-image.png'}
               />
             </div>
           ))}

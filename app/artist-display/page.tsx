@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../supabase/client';
+import Navbar from '../components/Navbar';
 
 interface Artist {
   artist_id: string;
@@ -38,6 +39,7 @@ const ArtistDisplayPage: React.FC = () => {
   }, []);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      <Navbar />
       {artists.map((artist) => (
         <Link key={artist.artist_id} href={`/artist/${artist.artist_id}`}>
           <div className="card hover:shadow-lg cursor-pointer">

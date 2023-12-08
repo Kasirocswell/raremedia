@@ -17,9 +17,9 @@ interface Content {
   type: 'picture' | 'song' | 'video';
   artist: string;
   artwork: string;
+  thumbnail: string;
 }
 
-// Define a type for the params
 interface Params {
   contentId: string;
 }
@@ -27,7 +27,7 @@ interface Params {
 const ContentPage: React.FC<{ params: Params }> = ({ params }) => {
   const [content, setContent] = useState<Content | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const contentId = params.contentId; // Extracting contentId from params
+  const contentId = params.contentId;
   const [isDataReady, setIsDataReady] = useState(false);
 
   useEffect(() => {
@@ -77,9 +77,9 @@ const ContentPage: React.FC<{ params: Params }> = ({ params }) => {
       case 'picture':
         return <ImageComponent url={content.url} title={content.title} description={content.description} />;
       case 'song':
-        return <SongPlayer url={content.url} title={content.title} artist={content.artist} artwork={content.artwork} />;
+        return <SongPlayer url={content.url} title={content.title} artist={content.artist} artwork={content.thumbnail || content.artwork} />;
       case 'video':
-        return <VideoPlayer url={content.url} title={content.title} artist={content.artist} />;
+        return <VideoPlayer url={content.url} title={content.title} artist={content.artist} thumbnail={content.thumbnail} />;
       default:
         return <p>Unknown content type</p>;
     }

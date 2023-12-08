@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../supabase/client';
 import Navbar from '@/app/components/Navbar';
 import { IconBrandInstagram, IconBrandTiktok, IconBrandTwitter } from '@tabler/icons-react';
-import ArtistCard from '@/app/components/ArtistCard'; // Adjust the import path as needed
+import ArtistCard from '@/app/components/ArtistCard';
 
 interface ArtistProfileData {
     id: string;
@@ -21,7 +21,8 @@ interface ContentData {
     id: string;
     title: string;
     description: string;
-    url: string; // Ensure this field is available in your content data
+    url: string;
+    thumbnail?: string; // Optional thumbnail field
 }
 
 interface Params {
@@ -65,7 +66,6 @@ const ArtistProfile: React.FC<{ params: Params }> = ({ params }) => {
           console.error('Error fetching artist content:', error);
         } else {
           setArtistContent(data || []);
-          console.log('Fetched artist content:', data); // Debugging log
         }
       }
     };
@@ -103,18 +103,18 @@ const ArtistProfile: React.FC<{ params: Params }> = ({ params }) => {
 
         {/* Section 3: Artist Content */}
         <div className='p-4 bg-gray-700'>
-    <h2 className='text-xl font-bold mb-2 text-white'>Content</h2>
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {artistContent.map(content => (
-            <ArtistCard
-                key={content.id}
-                imageUrl={content.url || 'default-image.png'} // Use 'url' instead of 'imageUrl'
-                name={content.title}
-                description={content.description}
-            />
-        ))}
-    </div>
-</div>
+            <h2 className='text-xl font-bold mb-2 text-white'>Content</h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                {artistContent.map(content => (
+                    <ArtistCard
+                        key={content.id}
+                        imageUrl={content.thumbnail || content.url || 'default-image.png'}
+                        name={content.title}
+                        description={content.description}
+                    />
+                ))}
+            </div>
+        </div>
     </div>
   );
 };

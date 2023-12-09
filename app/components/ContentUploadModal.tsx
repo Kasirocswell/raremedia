@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import { supabase } from '../../supabase/client';
@@ -21,7 +19,7 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
   const [isFree, setIsFree] = useState<boolean>(true);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
-  const [selectedTier, setSelectedTier] = useState<string>('');
+  const [selectedTiers, setSelectedTiers] = useState<string[]>([]); // Now an array
 
   const { user } = getUser();
 
@@ -104,8 +102,8 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
       type: contentType,
       url: publicUrl,
       thumbnail: thumbnailUrl,
-      is_free: isFree && !selectedTier,
-      tier: selectedTier || null,
+      is_free: isFree,
+      tier: [], // Set an empty array for tier
       created_at: new Date(),
       updated_at: new Date()
     }]);
@@ -116,7 +114,8 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
       alert('Content uploaded successfully!');
       onClose();
     }
-  };
+};
+
 
   const determineContentType = (fileName: string): ContentType => {
     const extension = fileName.split('.').pop()?.toLowerCase();
@@ -165,16 +164,6 @@ const ContentUploadModal: React.FC<ContentUploadModalProps> = ({ isOpen, onClose
         />
         Free Content
       </label>
-      <select
-        value={selectedTier}
-        onChange={(e) => setSelectedTier(e.target.value)}
-        className="border text-black border-gray-300 rounded p-2 mb-4 w-full"
-      >
-        <option value="">Select a Tier (optional)</option>
-        {tiers.map(tier => (
-          <option key={tier.id} value={tier.name}>{tier.name}</option>
-        ))}
-      </select>
       <button onClick={handleUpload} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         Upload
       </button>
